@@ -1,6 +1,6 @@
 import axios from "axios";
-import { uniqBy } from "lodash-es";
 import { XMLParser } from "fast-xml-parser";
+import { uniqBy } from "lodash-es";
 import { scheduleJob } from "node-schedule";
 
 interface IRssResponse {
