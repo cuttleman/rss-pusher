@@ -36,6 +36,7 @@ module.exports = {
       },
     ],
     "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-empty-function": "off",
   },
   settings: {
     "import/parsers": { "@typescript-eslint/parser": [".ts"] },
