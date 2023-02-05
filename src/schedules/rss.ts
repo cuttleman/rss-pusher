@@ -127,7 +127,7 @@ const _removeRedundantFeeds = async (
       // 텍스트별 중복체크 - 50% 이상 일치시 중복으로 간주
       newFeeds.push(
         ..._rawUnduplicated(duplicatedCheckByNewFeed, /[.|,\\\-:'"‘’·]/g)
-          .slice(0, limit ? Number(limit) : Infinity)
+          .slice(0, limit ? Number(limit) : 20)
           .map((item) => ({ ...item, keyword }))
       );
     } else if (items) {
