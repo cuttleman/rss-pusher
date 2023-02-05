@@ -13,15 +13,11 @@ RUN volta install node@${NODE_VERSION}
 RUN mkdir /app
 WORKDIR /app
 
-# NPM will not install any package listed in "devDependencies" when NODE_ENV is set to "production",
-# to install all modules: "npm install --production=false".
-# Ref: https://docs.npmjs.com/cli/v9/commands/npm-install#description
-
 ENV NODE_ENV production
 
 COPY . .
 
-RUN npm install && npm run build
+RUN corepack enable && pnpm run build
 FROM debian:bullseye
 
 LABEL fly_launch_runtime="nodejs"
@@ -33,4 +29,4 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV PATH /root/.volta/bin:$PATH
 
-CMD [ "npm", "run", "start" ]
+CMD [ "pnpm", "run", "start" ]
