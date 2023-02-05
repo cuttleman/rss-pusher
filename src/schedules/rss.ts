@@ -100,11 +100,11 @@ const _removeRedundantFeeds = async (
   const newFeeds = [];
 
   for (const storedKeyword of storedWebhook.keywords) {
-    const [key, lang, site] = storedKeyword.split("@"); // key@lang@site
+    const [key, lang, when, site, limit] = storedKeyword.split("@"); // key@lang@when@site@limit
     const { data } = await axios.get(
       `https://news.google.com/rss/search?q=${key ? `"${key}" ` : ""}${
         site ? `site:${site} ` : ""
-      }when:7d&hl=${lang || "ko"}`
+      }${when ? `when:${when}` : ""}&hl=${lang || "ko"}`
     );
 
     const parseData = xml2json.parse(data) as IRssResponse;
@@ -127,7 +127,7 @@ const _removeRedundantFeeds = async (
       // 텍스트별 중복체크 - 50% 이상 일치시 중복으로 간주
       newFeeds.push(
         ..._rawUnduplicated(duplicatedCheckByNewFeed, /[.|,\\\-:'"‘’·]/g)
-          .slice(0, 5)
+          .slice(0, limit ? Number(limit) : Infinity)
           .map((item) => ({ ...item, keyword }))
       );
     } else if (items) {

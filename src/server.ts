@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 8080;
 app.get("/", (req, res) => {
   const info = {
     usecase: {
-      "put webhooks": `https://<domain>/apis/webhooks?webhookurl=<webhookurl>&keyword=<key@when@site>`,
+      "put webhooks": `https://<domain>/apis/webhooks?webhookurl=<webhookurl>&keyword=<key@lang@when@site@limit>`,
       "delete webhook": `https://<domain>/apis/webhooks/delete?webhookurl=<webhookurl>`,
       "get titles": `https://<domain>/apis/titles`,
     },
