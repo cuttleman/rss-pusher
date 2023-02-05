@@ -6,7 +6,7 @@ import apis from "./apis";
 
 const app = express();
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 app.get("/", (req, res) => {
   const info = {
@@ -21,6 +21,6 @@ app.get("/", (req, res) => {
 app.use("/apis", apis);
 
 app.listen(PORT, () => {
-  console.log(`http://localhost:${PORT}`);
+  console.log("Server is Running 🥳");
   scheduler();
 });
