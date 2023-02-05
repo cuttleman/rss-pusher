@@ -7,8 +7,9 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "start:dev": "ts-node-dev -r tsconfig-paths/register --respawn --ignore-watch node_modules --transpile-only ./src/server.ts",
+    "dev": "ts-node-dev -r tsconfig-paths/register --respawn --ignore-watch node_modules --transpile-only ./src/server.ts",
     "build": "esbuild ./src/server.ts --bundle --platform=node --target=node18 --minify --outdir=dist",
+    "start": "node dist/server.js",
     "lint": "eslint --fix \"./src/**/*.ts\"",
     "prettier": "prettier --write ./src"
   },

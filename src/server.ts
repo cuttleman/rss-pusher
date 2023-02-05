@@ -21,6 +21,6 @@ app.get("/", (req, res) => {
 app.use("/apis", apis);
 
 app.listen(PORT, () => {
-  console.log("Server is Running 🥳");
   scheduler();
+  console.log("Server & Scheduler is Running 🥳");
 });

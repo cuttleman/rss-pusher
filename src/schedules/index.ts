@@ -3,7 +3,6 @@ import { scheduleJob, gracefulShutdown } from "node-schedule";
 import { rssSchedule } from "./rss";
 
 export const scheduler = () => {
-  console.log("scheduler start");
   // Initial Call
   rssSchedule();
 
