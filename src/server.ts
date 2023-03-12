@@ -3,6 +3,7 @@ import express from "express";
 import { scheduler } from "schedules";
 
 import apis from "./apis";
+import auth from "./auth";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.get("/", (req, res) => {
   res.json(info);
 });
 app.use("/apis", apis);
+app.use("/oauth", auth);
 
 app.listen(PORT, () => {
   scheduler();
