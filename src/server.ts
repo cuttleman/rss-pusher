@@ -3,7 +3,7 @@ import express from "express";
 import { scheduler } from "schedules";
 
 import apis from "./apis";
-import auth from "./auth";
+import oauth from "./oauth";
 
 const app = express();
 
@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 8080;
 app.get("/", (req, res) => {
   const info = {
     usecase: {
-      "put webhooks": `https://<domain>/apis/webhooks?webhookurl=<webhookurl>&keyword=<key@lang@when@site@limit>`,
+      "put webhooks": `https://<domain>/apis/webhooks?webhookurl=<webhookurl>&keyword=[key@lang, key@lang, ...]`,
       "delete webhook": `https://<domain>/apis/webhooks/delete?webhookurl=<webhookurl>`,
       "get titles": `https://<domain>/apis/titles`,
     },
@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
   res.json(info);
 });
 app.use("/apis", apis);
-app.use("/oauth", auth);
+app.use("/oauth", oauth);
 
 app.listen(PORT, () => {
   scheduler();

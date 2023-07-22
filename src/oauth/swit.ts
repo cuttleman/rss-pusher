@@ -1,7 +1,6 @@
 import axios from "axios";
 import crypto from "crypto";
 import { Router } from "express";
-import { constants } from "http2";
 
 interface ITokenResponse {
   access_token: string;

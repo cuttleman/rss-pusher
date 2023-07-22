@@ -3,8 +3,15 @@ import { XMLParser } from "fast-xml-parser";
 import { PathLike } from "fs";
 import uniqBy from "lodash/unionBy";
 
-import { feedPathDir, webhookPathDir } from "utils/constant";
+import {
+  delayTimeMs,
+  feedPathDir,
+  scrapFeedConfig,
+  storedFeedTTL,
+  webhookPathDir,
+} from "utils/constant";
 import { getDir, getFile, makeDir, makeFile } from "utils/makeFs";
+import sleep from "utils/sleep";
 
 interface IRssResponseItem {
   title: string;
@@ -42,8 +49,6 @@ interface IStoredFeedData {
 }
 
 const xml2json = new XMLParser();
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const _rawUnduplicated = (
   items: IRssResponseItem[],
@@ -100,11 +105,11 @@ const _removeRedundantFeeds = async (
   const newFeeds = [];
 
   for (const storedKeyword of storedWebhook.keywords) {
-    const [key, lang, when, site, limit] = storedKeyword.split("@"); // key@lang@when@site@limit
+    const [key, lang = "ko"] = storedKeyword.split("@"); // key@lang
     const { data } = await axios.get(
-      `https://news.google.com/rss/search?q=${key ? `"${key}" ` : ""}${
-        site ? `site:${site} ` : ""
-      }${when ? `when:${when}` : ""}&hl=${lang || "ko"}`
+      `https://news.google.com/rss/search?q=${key ? `"${key}" ` : ""}when:${
+        scrapFeedConfig.when
+      }&hl=${lang}`
     );
 
     const parseData = xml2json.parse(data) as IRssResponse;
@@ -127,7 +132,7 @@ const _removeRedundantFeeds = async (
       // 텍스트별 중복체크 - 50% 이상 일치시 중복으로 간주
       newFeeds.push(
         ..._rawUnduplicated(duplicatedCheckByNewFeed, /[.|,\\\-:'"‘’·]/g)
-          .slice(0, limit ? Number(limit) : 20)
+          .slice(0, scrapFeedConfig.limit)
           .map((item) => ({ ...item, keyword }))
       );
     } else if (items) {
@@ -137,7 +142,7 @@ const _removeRedundantFeeds = async (
       newFeeds.push({ ...items, keyword });
     }
 
-    await sleep(2000);
+    await sleep(delayTimeMs.scrap);
   }
 
   return uniqBy(
@@ -172,7 +177,7 @@ const _batchPutRSSFeed = async (
       ...newFeeds.map((feed) => ({
         title: feed.title,
         keyword: feed.keyword,
-        ttl: Date.now() + 7200000,
+        ttl: Date.now() + storedFeedTTL,
       })),
     ],
   };
@@ -219,6 +224,8 @@ export const rssSchedule = async () => {
 
     // webhookUrl(채널) 기준으로 반복
     for (const storedWebhook of storedWebhooks) {
+      let sendedCount = 0;
+
       const matchedFeed = storedFeeds?.find(
         (feed) => feed.id === storedWebhook.id
       );
@@ -247,25 +254,30 @@ export const rssSchedule = async () => {
         );
 
         // 중복제거된 피드데이터 채널에 전송
-        await Promise.allSettled(
-          unduplicatedFeeds.map((feed) => {
-            return axios.post(
-              storedWebhook.webhookurl,
-              {
-                text: `📰 ⌜ ${feed.title} ⌟\n${
-                  feed.keyword ? `#${feed.keyword} ` : ""
-                }${
-                  feed.source ? `@${feed.source}` : ""
-                }\n-----------------------------------\n${feed.link}`,
-              },
-              { headers: { "Content-Type": "application/json" } }
-            );
-          })
-        );
+
+        while (unduplicatedFeeds.length) {
+          const feed = unduplicatedFeeds.splice(0, 1)[0];
+
+          await axios.post(
+            storedWebhook.webhookurl,
+            {
+              text: `📰 ⌜ ${feed.title} ⌟\n${
+                feed.keyword ? `#${feed.keyword} ` : ""
+              }${
+                feed.source ? `@${feed.source}` : ""
+              }\n-----------------------------------\n${feed.link}\n`,
+            },
+            { headers: { "Content-Type": "application/json" } }
+          );
+
+          await sleep(delayTimeMs.send);
+
+          sendedCount++;
+        }
       }
 
       console.log(
-        `[RSS#Log] ${storedWebhook.webhookurl} 채널: ${unduplicatedFeeds.length}개 피드 추가 성공`
+        `[RSS#Log] ${storedWebhook.webhookurl} 채널: ${sendedCount}개 피드 추가 성공`
       );
     }
   } catch (error: any) {

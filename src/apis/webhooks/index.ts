@@ -8,7 +8,7 @@ import makeHash from "utils/makeHash";
 const router = Router();
 
 router.get("/", async (req, res) => {
-  // keyword: key@lang@when@site@limit
+  // keyword: key@lang
   const query = req.query as {
     webhookurl: string;
     keyword: string;
