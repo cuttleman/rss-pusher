@@ -5,6 +5,8 @@ import { webhookPathDir } from "utils/constant";
 import { deleteFile, getFile, makeDir, makeFile } from "utils/makeFs";
 import makeHash from "utils/makeHash";
 
+import { cacheHashFile } from "./webhook.service";
+
 const router = Router();
 
 router.get("/", async (req, res) => {
@@ -25,6 +27,8 @@ router.get("/", async (req, res) => {
     await makeDir(webhookPathDir);
     await makeFile(webhookPathDir, `${filename}.json`, data);
 
+    await cacheHashFile(filename, "store");
+
     const file = await getFile(webhookPathDir, `${filename}.json`);
 
     res.status(constants.HTTP_STATUS_OK).json(JSON.parse(file.toString()));
@@ -44,6 +48,8 @@ router.get("/delete", async (req, res) => {
   try {
     await makeDir(webhookPathDir);
     await deleteFile(webhookPathDir, `${filename}.json`);
+
+    await cacheHashFile(filename, "unstore");
 
     res
       .status(constants.HTTP_STATUS_OK)

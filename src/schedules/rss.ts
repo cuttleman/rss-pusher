@@ -261,11 +261,9 @@ export const rssSchedule = async () => {
           await axios.post(
             storedWebhook.webhookurl,
             {
-              text: `📰 ⌜ ${feed.title} ⌟\n${
-                feed.keyword ? `#${feed.keyword} ` : ""
-              }${
+              text: `${feed.title}\n${feed.keyword ? `#${feed.keyword} ` : ""}${
                 feed.source ? `@${feed.source}` : ""
-              }\n-----------------------------------\n${feed.link}\n`,
+              }\n-----------------------------------\n${feed.link}\n\n`,
             },
             { headers: { "Content-Type": "application/json" } }
           );

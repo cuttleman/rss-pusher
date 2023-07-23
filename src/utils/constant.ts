@@ -1,8 +1,12 @@
 import path from "path";
 
+export const staticPathDir = path.join(process.cwd(), "static");
+
 export const feedPathDir = path.join(process.cwd(), "feeds");
 
 export const webhookPathDir = path.join(process.cwd(), "webhooks");
+
+export const CACHED_HASH_FILENAME = "cache.json";
 
 export const scrapFeedConfig = {
   when: "1h",
