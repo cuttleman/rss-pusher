@@ -211,6 +211,19 @@ const _getStoredParsedFeeds = async (
   }
 };
 
+const _getRealLink = async (link: string) => {
+  try {
+    const { data } = await axios.get(link);
+
+    const match = String(data).match(/<a[^>]*>(.*?)<\/a>/);
+
+    if (!match?.[1]) return link;
+    return match[1];
+  } catch (error) {
+    return link;
+  }
+};
+
 export const rssSchedule = async () => {
   try {
     // rss-webhook 테이블 조회
@@ -257,13 +270,14 @@ export const rssSchedule = async () => {
 
         while (unduplicatedFeeds.length) {
           const feed = unduplicatedFeeds.splice(0, 1)[0];
+          const realLink = await _getRealLink(feed.link);
 
           await axios.post(
             storedWebhook.webhookurl,
             {
               text: `${feed.title}\n${feed.keyword ? `#${feed.keyword} ` : ""}${
                 feed.source ? `@${feed.source}` : ""
-              }\n-----------------------------------\n${feed.link}\n\n`,
+              }\n${realLink}`,
             },
             { headers: { "Content-Type": "application/json" } }
           );

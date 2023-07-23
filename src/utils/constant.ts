@@ -10,11 +10,11 @@ export const CACHED_HASH_FILENAME = "cache.json";
 
 export const scrapFeedConfig = {
   when: "1h",
-  limit: 5,
+  limit: 3,
 };
 
 export const delayTimeMs = {
-  send: 10000,
+  send: 5000,
   scrap: 2000,
 };
 
