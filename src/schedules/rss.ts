@@ -289,7 +289,7 @@ export const rssSchedule = async () => {
       }
 
       console.log(
-        `[RSS#Log] ${storedWebhook.webhookurl} 채널: ${sendedCount}개 피드 추가 성공`
+        `[RSS#Log] ${storedWebhook.webhookurl} - ${storedWebhook.keywords} 채널 : ${sendedCount}개 피드 추가 성공`
       );
     }
   } catch (error: any) {

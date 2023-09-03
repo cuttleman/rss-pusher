@@ -27,7 +27,7 @@ router.get("/", async (req, res) => {
     await makeDir(webhookPathDir);
     await makeFile(webhookPathDir, `${filename}.json`, data);
 
-    await cacheHashFile(filename, "store");
+    await cacheHashFile(`${filename}.json`, "store");
 
     const file = await getFile(webhookPathDir, `${filename}.json`);
 
@@ -49,7 +49,7 @@ router.get("/delete", async (req, res) => {
     await makeDir(webhookPathDir);
     await deleteFile(webhookPathDir, `${filename}.json`);
 
-    await cacheHashFile(filename, "unstore");
+    await cacheHashFile(`${filename}.json`, "unstore");
 
     res
       .status(constants.HTTP_STATUS_OK)

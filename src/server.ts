@@ -28,6 +28,12 @@ app.get("/", (req, res) => {
       "delete webhook": `${domain}/apis/webhooks/delete?webhookurl=<webhookurl>`,
       "get titles": `${domain}/apis/titles`,
     },
+    store: {
+      "*tip": "<filename> stored cache.json👇",
+      static: `${domain}/static/cache.json`,
+      feeds: `${domain}/feeds/<filename>`,
+      webhooks: `${domain}/webhooks/<filename>`,
+    },
   };
 
   res.json(info);

@@ -26,25 +26,21 @@ const fetchCache = async () => {
       JSON.stringify(cachedData.data)
     );
 
-    for await (const hash of cachedData.data) {
+    for await (const filename of cachedData.data) {
       const feedHash = await axios
-        .get(`${SERVICE_DOMAIN}/feeds/${hash}.json`)
+        .get(`${SERVICE_DOMAIN}/feeds/${filename}`)
         .catch(() => null);
       const webhookHash = await axios
-        .get(`${SERVICE_DOMAIN}/webhooks/${hash}.json`)
+        .get(`${SERVICE_DOMAIN}/webhooks/${filename}`)
         .catch(() => null);
 
       if (feedHash && feedHash.data) {
-        await makeFile(
-          feedPathDir,
-          `${hash}.json`,
-          JSON.stringify(feedHash.data)
-        );
+        await makeFile(feedPathDir, filename, JSON.stringify(feedHash.data));
       }
       if (webhookHash && webhookHash.data) {
         await makeFile(
           webhookPathDir,
-          `${hash}.json`,
+          filename,
           JSON.stringify(webhookHash.data)
         );
       }
