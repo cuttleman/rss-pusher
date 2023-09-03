@@ -30,6 +30,7 @@ const fetchCache = async () => {
       const feedHash = await axios
         .get(`${SERVICE_DOMAIN}/feeds/${filename}`)
         .catch(() => null);
+
       const webhookHash = await axios
         .get(`${SERVICE_DOMAIN}/webhooks/${filename}`)
         .catch(() => null);
@@ -37,6 +38,7 @@ const fetchCache = async () => {
       if (feedHash && feedHash.data) {
         await makeFile(feedPathDir, filename, JSON.stringify(feedHash.data));
       }
+
       if (webhookHash && webhookHash.data) {
         await makeFile(
           webhookPathDir,
