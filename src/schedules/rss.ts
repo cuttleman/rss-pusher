@@ -98,6 +98,10 @@ const _removeSource = (title: string, source?: string) => {
   return title.replace(` - ${source}`, "");
 };
 
+const _removeBreadcrumb = (title: string) => {
+  return title.replace(/\s?<\s?[\w가-힣]*\s?/g, "");
+};
+
 const _removeRedundantFeeds = async (
   storedWebhook: IStoredWebhookData,
   storedTitles: string[]
@@ -121,7 +125,7 @@ const _removeRedundantFeeds = async (
       // 제목에서 출판사 제거
       const removeSourceItems = items.map((item) => ({
         ...item,
-        title: _removeSource(item.title, item.source),
+        title: _removeBreadcrumb(_removeSource(item.title, item.source)),
       }));
 
       // 저장되어있던 제목들과 중복체크
@@ -136,7 +140,7 @@ const _removeRedundantFeeds = async (
           .map((item) => ({ ...item, keyword }))
       );
     } else if (items) {
-      items.title = _removeSource(items.title, items.source);
+      items.title = _removeBreadcrumb(_removeSource(items.title, items.source));
 
       if (storedTitles?.includes(items.title)) continue;
       newFeeds.push({ ...items, keyword });
@@ -254,9 +258,8 @@ export const rssSchedule = async () => {
       // 갱신된 피드데이터중 저장된 피드데이터와 중복체크 -> 중복제거된 피드데이터 반환
       const unduplicatedFeeds = await _removeRedundantFeeds(
         storedWebhook,
-        storedParsedFeeds?.feeds?.map((feed: any) => feed?.title) || []
+        storedParsedFeeds?.feeds?.map((feed) => feed?.title) || []
       );
-      // console.log("unduplicatedFeeds:", unduplicatedFeeds);
 
       if (unduplicatedFeeds.length > 0) {
         // rss-webhook 테이블 데이터 갱신
@@ -267,7 +270,6 @@ export const rssSchedule = async () => {
         );
 
         // 중복제거된 피드데이터 채널에 전송
-
         while (unduplicatedFeeds.length) {
           const feed = unduplicatedFeeds.splice(0, 1)[0];
           const realLink = await _getRealLink(feed.link);
@@ -275,9 +277,9 @@ export const rssSchedule = async () => {
           await axios.post(
             storedWebhook.webhookurl,
             {
-              text: `${feed.title}\n${feed.keyword ? `#${feed.keyword} ` : ""}${
-                feed.source ? `@${feed.source}` : ""
-              }\n${realLink}`,
+              text: `<${realLink}|*${feed.title}*>\n${
+                feed.keyword ? `📍_${feed.keyword}_  ` : ""
+              }${feed.source ? `🗞️ _${feed.source}_` : ""}`,
             },
             { headers: { "Content-Type": "application/json" } }
           );
@@ -288,9 +290,11 @@ export const rssSchedule = async () => {
         }
       }
 
-      console.log(
-        `[RSS#Log] ${storedWebhook.webhookurl} - ${storedWebhook.keywords} 채널 : ${sendedCount}개 피드 추가 성공`
-      );
+      if (sendedCount > 0) {
+        console.log(
+          `[RSS#Log] ${storedWebhook.webhookurl} - ${storedWebhook.keywords} 채널 피드 추가 완료`
+        );
+      }
     }
   } catch (error: any) {
     console.log("[RSS#Error]", error);
