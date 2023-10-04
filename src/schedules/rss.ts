@@ -278,8 +278,8 @@ export const rssSchedule = async () => {
             storedWebhook.webhookurl,
             {
               text: `<${realLink}|*${feed.title}*>\n${
-                feed.keyword ? `📍_${feed.keyword}_  ` : ""
-              }${feed.source ? `🗞️ _${feed.source}_` : ""}`,
+                feed.keyword ? `📍${feed.keyword}  ` : ""
+              }${feed.source ? `🗞️ ${feed.source}` : ""}`,
             },
             { headers: { "Content-Type": "application/json" } }
           );
