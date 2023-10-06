@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { XMLParser } from "fast-xml-parser";
 import { PathLike } from "fs";
 import uniqBy from "lodash/unionBy";
@@ -296,7 +296,17 @@ export const rssSchedule = async () => {
         );
       }
     }
-  } catch (error: any) {
-    console.log("[RSS#Error]", error);
+  } catch (error: unknown) {
+    if (axios.isAxiosError<{ message: string }>(error)) {
+      console.log(
+        "[RSS#AxiosError]",
+        error.response.status,
+        error.response?.data.message
+      );
+    } else if (error instanceof Error) {
+      console.log("[RSS#Error]", error.message);
+    } else {
+      console.log("[RSS#UnkownError]", error);
+    }
   }
 };
