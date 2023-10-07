@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
 import { PathLike } from "fs";
 import uniqBy from "lodash/unionBy";
@@ -172,13 +172,13 @@ const _scanStoredData = async (dirPath: PathLike) => {
 
 const _batchPutRSSFeed = async (
   id: string,
-  storedFeeds: IStoredFeedData,
+  storedFeeds: IStoredFeedData["feeds"],
   newFeeds: IRssResponseItemWithKeyword[]
 ) => {
   const data = {
     id,
     feeds: [
-      ...(storedFeeds?.feeds || []),
+      ...storedFeeds,
       ...newFeeds.map((feed) => ({
         title: feed.title,
         keyword: feed.keyword,
@@ -186,34 +186,14 @@ const _batchPutRSSFeed = async (
       })),
     ],
   };
-  makeFile(feedPathDir, `${id}.json`, JSON.stringify(data));
-  return;
+
+  await makeFile(feedPathDir, `${id}.json`, JSON.stringify(data));
 };
 
-const _ttlCheckRSSFeed = async (matchedFeed: IStoredFeedData, id: string) => {
-  if (!matchedFeed) return;
+const _ttlCheckRSSFeeds = (matchedFeeds: IStoredFeedData["feeds"]) => {
+  if (!matchedFeeds || matchedFeeds.length == 0) return [];
 
-  const ttlCheckedFeeds = matchedFeed.feeds.filter(
-    (feed) => feed.ttl > Date.now()
-  );
-  await makeFile(
-    feedPathDir,
-    `${id}.json`,
-    JSON.stringify({ id, feeds: ttlCheckedFeeds })
-  );
-};
-
-const _getStoredParsedFeeds = async (
-  dirPath: PathLike,
-  id: string
-): Promise<IStoredFeedData | null> => {
-  try {
-    const updatedBuffer = await getFile(dirPath, id);
-
-    return JSON.parse(updatedBuffer.toString()) as IStoredFeedData;
-  } catch (error) {
-    return null;
-  }
+  return matchedFeeds.filter((feed) => feed.ttl > Date.now());
 };
 
 const _getRealLink = async (link: string) => {
@@ -248,31 +228,25 @@ export const rssSchedule = async () => {
         (feed) => feed.id === storedWebhook.id
       );
 
-      await _ttlCheckRSSFeed(matchedFeed, storedWebhook.id);
-
-      // 저장된 피드데이터
-      const storedParsedFeeds = await _getStoredParsedFeeds(
-        feedPathDir,
-        `${storedWebhook.id}.json`
-      );
+      const ttlCheckedFeeds = _ttlCheckRSSFeeds(matchedFeed?.feeds);
 
       // 갱신된 피드데이터중 저장된 피드데이터와 중복체크 -> 중복제거된 피드데이터 반환
-      const unduplicatedFeeds = await _removeRedundantFeeds(
+      const unduplicatedNewFeeds = await _removeRedundantFeeds(
         storedWebhook,
-        storedParsedFeeds?.feeds?.map((feed) => feed?.title) || []
+        ttlCheckedFeeds?.map((feed) => feed?.title)
       );
 
-      if (unduplicatedFeeds.length > 0) {
+      if (unduplicatedNewFeeds.length > 0) {
         // rss-webhook 테이블 데이터 갱신
         await _batchPutRSSFeed(
           storedWebhook.id,
-          storedParsedFeeds,
-          unduplicatedFeeds
+          ttlCheckedFeeds,
+          unduplicatedNewFeeds
         );
 
         // 중복제거된 피드데이터 채널에 전송
-        while (unduplicatedFeeds.length) {
-          const feed = unduplicatedFeeds.splice(0, 1)[0];
+        while (unduplicatedNewFeeds.length) {
+          const feed = unduplicatedNewFeeds.splice(0, 1)[0];
           const realLink = await _getRealLink(feed.link);
 
           await axios.post(
