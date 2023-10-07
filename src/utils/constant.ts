@@ -18,4 +18,4 @@ export const delayTimeMs = {
   scrap: 2000,
 };
 
-export const storedFeedTTL = 7200000; // 2시간
+export const storedFeedTTL = 21600000; // 6시간
