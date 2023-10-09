@@ -6,8 +6,8 @@ export const scheduler = () => {
   // Initial Call
   rssSchedule();
 
-  // Call every 30 minutes
-  scheduleJob("*/30 * * * *", () => {
+  // Call every 1 hours
+  scheduleJob("0 0 * * * ?", () => {
     rssSchedule();
   });
 
