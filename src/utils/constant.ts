@@ -19,3 +19,5 @@ export const delayTimeMs = {
 };
 
 export const storedFeedTTL = 21600000; // 6시간
+
+export const excludeTitleRegex = /[.|,\\\-:'"‘’·]/g;

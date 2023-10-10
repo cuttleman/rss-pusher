@@ -5,6 +5,7 @@ import uniqBy from "lodash/unionBy";
 
 import {
   delayTimeMs,
+  excludeTitleRegex,
   feedPathDir,
   scrapFeedConfig,
   storedFeedTTL,
@@ -50,11 +51,43 @@ interface IStoredFeedData {
 
 const xml2json = new XMLParser();
 
-const _rawUnduplicated = (
-  items: IRssResponseItem[],
-  exceptionRegex: RegExp,
-  ratio: number
-) => {
+const _rawUnduplicatedRatio = (texts: string[], target: string) => {
+  let max = 0;
+
+  for (let i = 0; i < texts.length; i++) {
+    const itemA = texts[i]
+      .toLowerCase()
+      .replace(excludeTitleRegex, "")
+      .split(" ");
+    const itemB = target
+      .toLowerCase()
+      .replace(excludeTitleRegex, "")
+      .split(" ");
+
+    const joinItemA = itemA.join("");
+    const joinItemB = itemB.join("");
+
+    const sameA = itemA.filter(
+      (text) => text.length > 0 && joinItemB.includes(text)
+    );
+    const sameB = itemB.filter(
+      (text) => text.length > 0 && joinItemA.includes(text)
+    );
+
+    let sameArr = sameA;
+    let originArr = itemA;
+    if (sameA.length < sameB.length) {
+      sameArr = sameB;
+      originArr = itemB;
+    }
+
+    max = Math.max(max, Number((sameArr.length / originArr.length).toFixed(2)));
+  }
+
+  return max;
+};
+
+const _rawUnduplicated = (items: IRssResponseItem[], ratio: number) => {
   const copiedItems = [...items];
   for (let i = 0; i < copiedItems.length; i++) {
     for (let j = copiedItems.length - 1; j >= 0; j--) {
@@ -62,11 +95,11 @@ const _rawUnduplicated = (
 
       const itemA = copiedItems[i].title
         .toLowerCase()
-        .replace(exceptionRegex, "")
+        .replace(excludeTitleRegex, "")
         .split(" ");
       const itemB = copiedItems[j].title
         .toLowerCase()
-        .replace(exceptionRegex, "")
+        .replace(excludeTitleRegex, "")
         .split(" ");
 
       const joinItemA = itemA.join("");
@@ -131,19 +164,19 @@ const _removeRedundantFeeds = async (
 
       // 저장되어있던 제목들과 중복체크
       const duplicatedCheckByNewFeed = removeSourceItems.filter(
-        (feed) => !storedTitles?.includes(feed.title)
+        (feed) => _rawUnduplicatedRatio(storedTitles, feed.title) < 0.4
       );
 
       // 텍스트별 중복체크 - 40% 이상 일치시 중복으로 간주
       newFeeds.push(
-        ..._rawUnduplicated(duplicatedCheckByNewFeed, /[.|,\\\-:'"‘’·]/g, 0.4)
+        ..._rawUnduplicated(duplicatedCheckByNewFeed, 0.4)
           .slice(0, scrapFeedConfig.limit)
           .map((item) => ({ ...item, keyword }))
       );
     } else if (items) {
       items.title = _removeBreadcrumb(_removeSource(items.title, items.source));
 
-      if (storedTitles?.includes(items.title)) continue;
+      if (_rawUnduplicatedRatio(storedTitles, items.title) >= 0.4) continue;
       newFeeds.push({ ...items, keyword });
     }
 
@@ -151,7 +184,7 @@ const _removeRedundantFeeds = async (
   }
 
   return uniqBy(
-    _rawUnduplicated(newFeeds, /[.|,\\\-:'"‘’·]/g, 0.4),
+    _rawUnduplicated(newFeeds, 0.4),
     "title"
   ) as IRssResponseItemWithKeyword[];
 };
